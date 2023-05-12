@@ -99,6 +99,10 @@ class JSONLoader(BaseLoader):
             # In case the text is None, set it to an empty string
             text = text or ""
 
+            # In case the text is of type dict or list, dump to a JSON string
+            if type(text) in [dict, list]:
+                text = json.dumps(text)
+
             docs.append(Document(page_content=text, metadata=metadata))
 
         return docs

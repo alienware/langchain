@@ -51,7 +51,7 @@ class NestedJSONLoader(BaseLoader):
                     flatten_json(a, key_name + identifier + '_')
                     i += 1
             else:
-                out[key_name[:-1]] = x
+                out[key_name[:-1]] = json_data
 
         flatten_json(json.loads(json_text))
         return out

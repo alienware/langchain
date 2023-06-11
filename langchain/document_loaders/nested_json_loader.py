@@ -63,7 +63,7 @@ class NestedJSONLoader(BaseLoader):
 
         docs = []
 
-        for i, sample in enumerate(data, 1):
+        for i, sample in enumerate(data.items(), 1):
             metadata = dict(
                 source=str(self.file_path),
                 seq_num=i,
@@ -72,7 +72,7 @@ class NestedJSONLoader(BaseLoader):
             text = sample
 
             # In case the text is None, set it to an empty string
-            text = text or ""
+            text = dict([text]) or ""
 
             # In case the text is of type dict or list, dump to a JSON string
             if type(text) in [dict, list]:

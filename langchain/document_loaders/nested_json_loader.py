@@ -48,7 +48,7 @@ class NestedJSONLoader(BaseLoader):
                         identifier = a[a['identifier']]
                     except:
                         identifier = str(i)
-                    flatten(a, key_name + identifier + '_')
+                    flatten_json(a, key_name + identifier + '_')
                     i += 1
             else:
                 out[key_name[:-1]] = x

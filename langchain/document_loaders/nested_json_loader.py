@@ -33,7 +33,7 @@ class NestedJSONLoader(BaseLoader):
         self.file_path = Path(file_path).resolve()
         self._metadata_func = metadata_func
 
-    def _flatten__nested_json(json_text):
+    def _flatten__nested_json(self, json_text):
         out = {}
 
         def flatten_json(json_data, key_name=''):

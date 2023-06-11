@@ -19,7 +19,6 @@ class NestedJSONLoader(BaseLoader):
     def __init__(
         self,
         file_path: Union[str, Path],
-        jq_schema: str,
         metadata_func: Optional[Callable[[Dict, Dict], Dict]] = None,
     ):
         """Initialize the JSONLoader.

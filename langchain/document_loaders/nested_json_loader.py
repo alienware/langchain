@@ -40,7 +40,7 @@ class NestedJSONLoader(BaseLoader):
             if type(json_data) is dict:
                 for a in json_data:
                     if a == 'identifier': continue
-                    flatten(json_data[a], key_name + a + '_')
+                    flatten_json(json_data[a], key_name + a + '_')
             elif type(json_data) is list:
                 i = 0
                 for a in json_data:

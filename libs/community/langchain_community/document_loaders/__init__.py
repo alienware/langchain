@@ -303,6 +303,9 @@ if TYPE_CHECKING:
     from langchain_community.document_loaders.needle import (
         NeedleLoader,
     )
+    from langchain_community.document_loaders.nested_json_loader import (
+        NestedJSONLoader,
+    )
     from langchain_community.document_loaders.news import (
         NewsURLLoader,
     )

@@ -2,12 +2,13 @@ version: '3'
 services:
   langchain:
     build:
-      dockerfile: .devcontainer/Dockerfile
-      context: ../ 
+      dockerfile: libs/langchain/dev.Dockerfile
+      context: ..
     volumes:
-      - ../:/workspaces/langchain
+      # Update this to wherever you want VS Code to mount the folder of your project
+      - ..:/workspaces/langchain:cached
     networks:
-      - langchain-network 
+      - langchain-network
   #   environment:
   #     MONGO_ROOT_USERNAME: root
   #     MONGO_ROOT_PASSWORD: example123
@@ -27,5 +28,3 @@ services:
 networks:
   langchain-network:
     driver: bridge
-    
-    

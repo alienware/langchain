@@ -1,65 +1,88 @@
-.PHONY: all clean format lint test tests test_watch integration_tests docker_tests help
+.PHONY: all clean help docs_build docs_clean docs_linkcheck api_docs_build api_docs_clean api_docs_linkcheck spell_check spell_fix lint lint_package lint_tests format format_diff
 
+.EXPORT_ALL_VARIABLES:
+UV_FROZEN = true
+UV_NO_SYNC = true
+
+## help: Show this help info.
+help: Makefile
+	@printf "\n\033[1mUsage: make <TARGETS> ...\033[0m\n\n\033[1mTargets:\033[0m\n\n"
+	@sed -n 's/^## //p' $< | awk -F':' '{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' | sort | sed -e 's/^/  /'
+
+## all: Default target, shows help.
 all: help
 
-coverage:
-	poetry run pytest --cov \
-		--cov-config=.coveragerc \
-		--cov-report xml \
-		--cov-report term-missing:skip-covered
+## clean: Clean documentation and API documentation artifacts.
+clean: docs_clean api_docs_clean
 
-clean: docs_clean
+######################
+# DOCUMENTATION
+######################
 
+## docs_build: Build the documentation.
 docs_build:
-	cd docs && poetry run make html
+	cd docs && make build
 
+## docs_clean: Clean the documentation build artifacts.
 docs_clean:
-	cd docs && poetry run make clean
+	cd docs && make clean
 
+## docs_linkcheck: Run linkchecker on the documentation.
 docs_linkcheck:
-	poetry run linkchecker docs/_build/html/index.html
+	uv run --no-group test linkchecker _dist/docs/ --ignore-url node_modules
 
-format:
-	poetry run black .
-	poetry run ruff --select I --fix .
+## api_docs_build: Build the API Reference documentation.
+api_docs_build:
+	uv run --no-group test python docs/api_reference/create_api_rst.py
+	cd docs/api_reference && uv run --no-group test make html
+	uv run --no-group test python docs/api_reference/scripts/custom_formatter.py docs/api_reference/_build/html/
 
-PYTHON_FILES=.
-lint: PYTHON_FILES=.
-lint_diff: PYTHON_FILES=$(shell git diff --name-only --diff-filter=d master | grep -E '\.py$$')
+API_PKG ?= text-splitters
 
-lint lint_diff:
-	poetry run mypy $(PYTHON_FILES)
-	poetry run black $(PYTHON_FILES) --check
-	poetry run ruff .
+api_docs_quick_preview:
+	uv run --no-group test python docs/api_reference/create_api_rst.py $(API_PKG)
+	cd docs/api_reference && uv run make html
+	uv run --no-group test python docs/api_reference/scripts/custom_formatter.py docs/api_reference/_build/html/
+	open docs/api_reference/_build/html/reference.html
 
-TEST_FILE ?= tests/unit_tests/
+## api_docs_clean: Clean the API Reference documentation build artifacts.
+api_docs_clean:
+	find ./docs/api_reference -name '*_api_reference.rst' -delete
+	git clean -fdX ./docs/api_reference
+	rm docs/api_reference/index.md
+	
 
-test:
-	poetry run pytest $(TEST_FILE)
+## api_docs_linkcheck: Run linkchecker on the API Reference documentation.
+api_docs_linkcheck:
+	uv run --no-group test linkchecker docs/api_reference/_build/html/index.html
 
-tests:
-	poetry run pytest $(TEST_FILE)
+## spell_check: Run codespell on the project.
+spell_check:
+	uv run --no-group test codespell --toml pyproject.toml
 
-test_watch:
-	poetry run ptw --now . -- tests/unit_tests
+## spell_fix: Run codespell on the project and fix the errors.
+spell_fix:
+	uv run --no-group test codespell --toml pyproject.toml -w
 
-integration_tests:
-	poetry run pytest tests/integration_tests
+######################
+# LINTING AND FORMATTING
+######################
 
-docker_tests:
-	docker build -t my-langchain-image:test .
-	docker run --rm my-langchain-image:test
+## lint: Run linting on the project.
+lint lint_package lint_tests:
+	uv run --group lint ruff check docs cookbook
+	uv run --group lint ruff format docs cookbook cookbook --diff
+	uv run --group lint ruff check --select I docs cookbook
+	git --no-pager grep 'from langchain import' docs cookbook | grep -vE 'from langchain import (hub)' && echo "Error: no importing langchain from root in docs, except for hub" && exit 1 || exit 0
+	
+	git --no-pager grep 'api.python.langchain.com' -- docs/docs ':!docs/docs/additional_resources/arxiv_references.mdx' ':!docs/docs/integrations/document_loaders/sitemap.ipynb' || exit 0 && \
+	echo "Error: you should link python.langchain.com/api_reference, not api.python.langchain.com in the docs" && \
+	exit 1
 
-help:
-	@echo '----'
-	@echo 'coverage                     - run unit tests and generate coverage report'
-	@echo 'docs_build                   - build the documentation'
-	@echo 'docs_clean                   - clean the documentation build artifacts'
-	@echo 'docs_linkcheck               - run linkchecker on the documentation'
-	@echo 'format                       - run code formatters'
-	@echo 'lint                         - run linters'
-	@echo 'test                         - run unit tests'
-	@echo 'test TEST_FILE=<test_file>   - run all tests in file'
-	@echo 'test_watch                   - run unit tests in watch mode'
-	@echo 'integration_tests            - run integration tests'
-	@echo 'docker_tests                 - run unit tests in docker'
+## format: Format the project files.
+format format_diff:
+	uv run --group lint ruff format docs cookbook
+	uv run --group lint ruff check --select I --fix docs cookbook
+
+update-package-downloads:
+	uv run python docs/scripts/packages_yml_get_downloads.py

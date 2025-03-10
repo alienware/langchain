@@ -105,6 +105,7 @@ if TYPE_CHECKING:
         ModernTreasuryLoader,
         MongodbLoader,
         MWDumpLoader,
+        NestedJSONLoader,
         NewsURLLoader,
         NotebookLoader,
         NotionDBLoader,
